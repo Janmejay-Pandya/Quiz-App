@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Question from "../components/Question";
 import { saveAttempt } from "../utils/indexdb";
-import { quizData } from "../utils/quizData"; // Import quiz questions
+import { quizData } from "../utils/quizdata"; // Import quiz questions
 
 const QuizPage = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
