@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getHistory } from "../utils/indexedDB"
+import { getHistory } from "../utils/indexdb"
 import { Link } from "react-router-dom";
 import { Clock, ChevronDown, ChevronUp, Home, Check, X, Calendar, Award, BookOpen } from 'lucide-react';
 
