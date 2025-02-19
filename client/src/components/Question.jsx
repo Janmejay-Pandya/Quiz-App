@@ -1,14 +1,20 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Clock, CheckCircle, XCircle, ChevronRight, PenTool, ListOrdered, Sparkles, Star, Brain } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, ChevronRight, PenTool, ListOrdered, Sparkles, Star, Brain, Split, SkipForward } from 'lucide-react';
 
-const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, timerDuration = 30 }) => {
+const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, timerDuration = 30, isLastQuestion }) => {
     const [selectedOption, setSelectedOption] = useState(null);
     const [typedAnswer, setTypedAnswer] = useState("");
     const [timeLeft, setTimeLeft] = useState(timerDuration);
     const [isAnswered, setIsAnswered] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState("");
     const [isTimerRunning, setIsTimerRunning] = useState(true);
+    const [powerUps, setPowerUps] = useState({
+        fiftyFifty: 1,
+        skip: 1
+    });
+    const [removedOptions, setRemovedOptions] = useState([]);
+    const isIntegerType = options.length === 0;
 
     useEffect(() => {
         setSelectedOption(null);
@@ -17,6 +23,7 @@ const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, 
         setTimeLeft(timerDuration);
         setFeedbackMessage("");
         setIsTimerRunning(true);
+        setRemovedOptions([]);
     }, [question]);
 
     useEffect(() => {
@@ -46,6 +53,29 @@ const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, 
             onAnswerSelected({ question, selectedOption: typedAnswer, isCorrect });
             setIsAnswered(true);
             setIsTimerRunning(false);
+        }
+    };
+
+    const handleFiftyFifty = () => {
+        if (powerUps.fiftyFifty > 0 && !isAnswered && !isIntegerType) {
+            const incorrectOptions = options.filter(option => option !== correctAnswer);
+            const shuffledIncorrect = [...incorrectOptions].sort(() => Math.random() - 0.5);
+            const optionsToRemove = shuffledIncorrect.slice(0, Math.min(2, incorrectOptions.length));
+            setRemovedOptions(optionsToRemove);
+            setPowerUps(prev => ({
+                ...prev,
+                fiftyFifty: prev.fiftyFifty - 1
+            }));
+        }
+    };
+
+    const handleSkip = () => {
+        if (powerUps.skip > 0 && !isAnswered) {
+            setPowerUps(prev => ({
+                ...prev,
+                skip: prev.skip - 1
+            }));
+            onNext();
         }
     };
 
@@ -101,16 +131,17 @@ const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, 
             {/* Content */}
             <div className="relative w-full max-w-3xl mx-auto">
                 <div className="bg-white/85 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-gray-100">
+
                     {/* Question Header */}
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center space-x-2">
-                            {options.length === 0 ? (
+                            {isIntegerType ? (
                                 <PenTool className="w-6 h-6 text-purple-600" />
                             ) : (
                                 <ListOrdered className="w-6 h-6 text-blue-600" />
                             )}
                             <h3 className="text-lg font-medium text-gray-700">
-                                {options.length === 0 ? "Integer Type Question" : "MCQ-Based Question"}
+                                {isIntegerType ? "Integer Type Question" : "MCQ-Based Question"}
                             </h3>
                         </div>
                         <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-full">
@@ -121,6 +152,35 @@ const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, 
                         </div>
                     </div>
 
+                    {/* Power-ups - Now shown for both question types */}
+                    <div className="flex justify-end gap-4 mb-6">
+                        <button
+                            onClick={handleFiftyFifty}
+                            disabled={powerUps.fiftyFifty === 0 || isAnswered || isIntegerType}
+                            className={`flex items-center px-4 py-2 rounded-full font-semibold text-xs
+                                ${powerUps.fiftyFifty > 0 && !isAnswered && !isIntegerType
+                                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                }`}
+                        >
+                            <Split className="mr-2 h-4 w-4" />
+                            50:50 ({powerUps.fiftyFifty})
+                        </button>
+
+                        <button
+                            onClick={handleSkip}
+                            disabled={powerUps.skip === 0 || isAnswered}
+                            className={`flex items-center px-4 py-2 rounded-full font-semibold text-xs
+                                ${powerUps.skip > 0 && !isAnswered
+                                    ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                }`}
+                        >
+                            <SkipForward className="mr-2 h-4 w-4" />
+                            Skip ({powerUps.skip})
+                        </button>
+                    </div>
+
                     {/* Question */}
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold text-gray-800 leading-relaxed">{question}</h2>
@@ -128,7 +188,7 @@ const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, 
 
                     {/* Answer Section */}
                     <div className="space-y-4">
-                        {options.length === 0 ? (
+                        {isIntegerType ? (
                             <div className="space-y-4">
                                 <input
                                     type="text"
@@ -149,19 +209,21 @@ const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, 
                         ) : (
                             <div className="grid gap-3">
                                 {options.map((option, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handleAnswer(option)}
-                                        disabled={isAnswered}
-                                        className={`w-full p-4 text-left border rounded-xl transition-all duration-300 ${getButtonClass(option)}`}
-                                    >
-                                        <div className="flex items-center space-x-3">
-                                            <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 font-medium">
-                                                {String.fromCharCode(65 + index)}
-                                            </span>
-                                            <span className="text-lg">{option}</span>
-                                        </div>
-                                    </button>
+                                    !removedOptions.includes(option) && (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleAnswer(option)}
+                                            disabled={isAnswered}
+                                            className={`w-full p-4 text-left border rounded-xl transition-all duration-300 ${getButtonClass(option)}`}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 font-medium">
+                                                    {String.fromCharCode(65 + index)}
+                                                </span>
+                                                <span className="text-lg">{option}</span>
+                                            </div>
+                                        </button>
+                                    )
                                 ))}
                             </div>
                         )}
@@ -182,9 +244,9 @@ const Question = ({ question, options, correctAnswer, onAnswerSelected, onNext, 
                             </div>
                             <button
                                 onClick={onNext}
-                                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-300"
+                                className={`flex items-center space-x-2 px-6 py-3 bg-gradient-to-r ${isLastQuestion ? 'from-green-600 to-green-700 hover:from-green-700 hover:to-green-800' : 'from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'} text-white rounded-xl font-semibold transition-all duration-300`}
                             >
-                                <span>Next Question</span>
+                                <span>{isLastQuestion ? "Finish Quiz" : "Next Question"}</span>
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
@@ -225,7 +287,7 @@ Question.propTypes = {
     onAnswerSelected: PropTypes.func.isRequired,
     onNext: PropTypes.func.isRequired,
     timerDuration: PropTypes.number,
-    questionType: PropTypes.oneOf(["MCQ", "Integer"]).isRequired,
+    isLastQuestion: PropTypes.bool
 };
 
 export default Question;

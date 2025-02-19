@@ -26,7 +26,7 @@ export const quizData = [
   {
     id: 5,
     question: "Which of these processes is not typically involved in refining petroleum?",
-    options: ["Fractional distillation", "Cracking", "Polymerization"],
+    options: ["Fractional distillation", "Cracking", "Polymerization","Alkylation"],
     answer: "Polymerization",
   },
   {
