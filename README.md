@@ -14,8 +14,8 @@ A dynamic quiz application built with React that features an engaging user inter
 * 🎨 Modern, responsive UI with animations
 * 🌓 Glassmorphic design elements
 * 💪 Power-ups:
-50:50 - Removes two incorrect options
-Skip - Skip the current question
+  * 50:50 - Removes two incorrect options
+  * Skip - Skip the current question
 
 
 # Tech Stack
