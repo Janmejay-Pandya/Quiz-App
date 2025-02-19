@@ -42,6 +42,8 @@ npm install
 ```bash
 npm run dev 
 ```
+# Link for the deployed App
+ https://quizz-nest.vercel.app/
 
 
 
